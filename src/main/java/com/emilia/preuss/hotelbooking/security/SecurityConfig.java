@@ -16,7 +16,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-@EnableMethodSecurity // Enables method-level security annotations like @PreAuthorize
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
@@ -46,13 +46,14 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/rooms/add/**").hasRole("ADMIN")
-                        .requestMatchers("/rooms/delete/**").hasRole("ADMIN")
-                        .requestMatchers("/rooms/update/**").hasRole("ADMIN")
-                        .requestMatchers("/rooms/**").hasAnyRole("ADMIN", "USER")
-                        .requestMatchers("/bookings/**").hasAnyRole("ADMIN", "USER")
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
+//                        .requestMatchers("/auth/**").permitAll()
+//                        .requestMatchers("/rooms/add/**").hasRole("ADMIN")
+//                        .requestMatchers("/rooms/delete/**").hasRole("ADMIN")
+//                        .requestMatchers("/rooms/update/**").hasRole("ADMIN")
+//                        .requestMatchers("/rooms/**").hasAnyRole("ADMIN", "USER")
+//                        .requestMatchers("/bookings/**").hasAnyRole("ADMIN", "USER")
+//                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);;
 
@@ -62,7 +63,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:5173"); // Allow your frontend origin
+        configuration.addAllowedOrigin("http://localhost:5173"); // Allow frontend origin
+        configuration.addAllowedOrigin("http://localhost:5174");
         configuration.addAllowedMethod("*"); // Allow all HTTP methods
         configuration.addAllowedHeader("*"); // Allow all headers
         configuration.setAllowCredentials(true); // Allow credentials

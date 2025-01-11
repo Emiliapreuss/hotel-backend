@@ -23,7 +23,10 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
-    // Register a new user with hashed password
+   public Optional<User> findByEmail(String email) {
+       return userRepository.findByEmail(email);
+   }
+
     public void registerUser(User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new RuntimeException("Email already in use");

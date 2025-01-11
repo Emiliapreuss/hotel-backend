@@ -1,11 +1,14 @@
 package com.emilia.preuss.hotelbooking.filter;
 
+import com.emilia.preuss.hotelbooking.security.JwtTokenProvider;
+import com.emilia.preuss.hotelbooking.service.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,14 +28,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    @Autowired
+    JwtTokenService jwtTokenService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
         String token = getJwtFromRequest(request);
 
-        if (token != null && validateToken(token)) {
-            String username = getUsernameFromToken(token);
-            List<SimpleGrantedAuthority> authorities = getAuthoritiesFromToken(token);
+        if (token != null && jwtTokenService.validateToken(token)) {
+            String username = jwtTokenService.getUsernameFromToken(token);
+            List<SimpleGrantedAuthority> authorities = jwtTokenService.getAuthoritiesFromToken(token);
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     username, null, authorities);
@@ -48,27 +54,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken.substring(7);
         }
         return null;
-    }
-
-    private boolean validateToken(String token) {
-        try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
-        return claims.getSubject();
-    }
-
-    private List<SimpleGrantedAuthority> getAuthoritiesFromToken(String token) {
-        Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
-        String roles = claims.get("roles", String.class);
-        return Arrays.stream(roles.split(","))
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
     }
 }

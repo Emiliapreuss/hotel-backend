@@ -27,21 +27,17 @@ public class Booking {
     @JoinColumn(name = "room_id")
     private Room room;
 
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     private String confirmationCode;
 
     private LocalDate checkInDate;
 
     private LocalDate checkOutDate;
 
-    private String guestFullName;
-
-    private String guestEmail;
-
     private int numOfAdults;
 
     private int numOfChildren;
-
-    public int getTotalGuestNumber() {
-        return numOfAdults + numOfChildren;
-    }
 }

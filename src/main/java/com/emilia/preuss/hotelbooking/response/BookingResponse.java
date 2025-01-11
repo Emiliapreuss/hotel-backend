@@ -25,6 +25,6 @@ public class BookingResponse {
 
     private int numOfChildren;
 
-    private RoomResponse room;
+    private Long roomId;
 
 }

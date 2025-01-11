@@ -3,11 +3,10 @@ package com.emilia.preuss.hotelbooking.controller;
 import com.emilia.preuss.hotelbooking.exception.InvalidBookingRequestException;
 import com.emilia.preuss.hotelbooking.exception.ResourceNotFoundException;
 import com.emilia.preuss.hotelbooking.model.Booking;
-import com.emilia.preuss.hotelbooking.model.Room;
+import com.emilia.preuss.hotelbooking.request.BookingRequest;
 import com.emilia.preuss.hotelbooking.response.BookingResponse;
-import com.emilia.preuss.hotelbooking.response.RoomResponse;
 import com.emilia.preuss.hotelbooking.service.BookingService;
-import com.emilia.preuss.hotelbooking.service.RoomService;
+import com.emilia.preuss.hotelbooking.utils.AuthenticationUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +21,8 @@ import static java.util.stream.Collectors.toList;
 @RequestMapping("/bookings")
 public class BookingController {
 
+    private final AuthenticationUtils authenticationUtils;
     private final BookingService bookingService;
-    private final RoomService roomService;
 
 
     @GetMapping
@@ -40,6 +39,13 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/user")
+    public ResponseEntity<List<BookingResponse>> getAllBookingsByUser() {
+        Long userId = authenticationUtils.getAuthenticatedUser().getId();
+        List<Booking> bookings = bookingService.getAllBokingsByUser(userId);
+        List<BookingResponse> response = bookings.stream().map(booking -> getBookingResponse(booking)).collect(toList());
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/confirmation/{confirmationCode}")
     public ResponseEntity<?> getBookingByConfirmationCode(String confirmationCode) {
@@ -54,7 +60,7 @@ public class BookingController {
     }
 
     @PostMapping("/room/{roomId}/booking")
-    public ResponseEntity<?> saveBooking(@PathVariable Long roomId, @RequestBody Booking bookingRequest) {
+    public ResponseEntity<?> saveBooking(@PathVariable Long roomId, @RequestBody BookingRequest bookingRequest) {
         try {
             String confirmationCode = bookingService.saveBooking(roomId, bookingRequest);
             return ResponseEntity.ok("Room booked successfully, your confirmation code is: " + confirmationCode);
@@ -64,29 +70,22 @@ public class BookingController {
         }
     }
 
-    @DeleteMapping("/booking/{bookingId}/delete")
-    public void cancelBooking(Long bookingId) {
-        bookingService.cancelBooking(bookingId);
+    @DeleteMapping("/booking/{confirmationCode}/delete")
+    public void cancelBooking(@PathVariable String confirmationCode) {
+        bookingService.cancelBooking(confirmationCode);
     }
 
     private BookingResponse getBookingResponse(Booking booking) {
-        Room room = roomService.getRoomById(booking.getRoom().getId()).get();
-        RoomResponse roomResponse = RoomResponse.builder()
-                .id(room.getId())
-                .type(room.getType())
-                .price(room.getPrice())
-                .build();
-
         return BookingResponse.builder()
                 .bookingId(booking.getBookingId())
                 .confirmationCode(booking.getConfirmationCode())
+                .guestEmail(booking.getUser().getEmail())
+                .guestFullName(booking.getUser().getFullName())
                 .checkInDate(booking.getCheckInDate())
                 .checkOutDate(booking.getCheckOutDate())
-                .guestFullName(booking.getGuestFullName())
-                .guestEmail(booking.getGuestEmail())
                 .numOfAdults(booking.getNumOfAdults())
                 .numOfChildren(booking.getNumOfChildren())
-                .room(roomResponse)
+                .roomId(booking.getRoom().getId())
                 .build();
 
     }

@@ -35,7 +35,7 @@ public class Room {
     private Blob photo;
 
     //cascade - when the room is deleted, the booking will also be
-    @OneToMany(fetch = LAZY, cascade = CascadeType.ALL)
+    @OneToMany( fetch = LAZY,mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Booking> bookings;
 
     public Room() {
